@@ -1,0 +1,41 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "damage_002",
+                "damage_type": "moderate",
+                "confidence": 0.85,
+                "notes": "Debris on road, passable with caution"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            106.8035,
+                            -6.2000
+                        ],
+                        [
+                            106.8040,
+                            -6.2005
+                        ],
+                        [
+                            106.8045,
+                            -6.2000
+                        ],
+                        [
+                            106.8040,
+                            -6.1995
+                        ],
+                        [
+                            106.8035,
+                            -6.2000
+                        ]
+                    ]
+                ]
+            }
+        }
+    ]
+}

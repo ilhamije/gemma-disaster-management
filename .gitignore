@@ -1,0 +1,29 @@
+# .gitignore
+# Data files (too large for git)
+data/rescuenet/
+*.jpg
+*.png
+*.mp4
+
+# Model files
+models/
+*.bin
+*.safetensors
+
+# Temporary files
+temp/
+logs/
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+.venv/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
