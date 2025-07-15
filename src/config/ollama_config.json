@@ -12,7 +12,7 @@
     },
     "linux": {
         "base_url": "http://localhost:11434",
-        "model": "gemma3n:2b",
+        "model": "gemma3n:4b",
         "timeout": 120,
         "performance_mode": "efficient"
     }

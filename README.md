@@ -1,8 +1,4 @@
-<img src="https://r2cdn.perplexity.ai/pplx-full-logo-primary-dark%402x.png" class="logo" width="120"/>
-
-# DEPLOYMENT
-
-## 1. **System Overview**
+# 1. **System Overview**
 
 | Task                              | Supported? | Details                                                                             |
 | :-------------------------------- | :--------- | :---------------------------------------------------------------------------------- |

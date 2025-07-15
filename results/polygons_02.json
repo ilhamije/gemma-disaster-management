@@ -1,0 +1,149 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "damage_001",
+                "class": "Building-Total-Destruction",
+                "confidence": 0.97,
+                "notes": "Complete collapse"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            106.8030,
+                            -6.2010
+                        ],
+                        [
+                            106.8032,
+                            -6.2010
+                        ],
+                        [
+                            106.8032,
+                            -6.2012
+                        ],
+                        [
+                            106.8030,
+                            -6.2012
+                        ],
+                        [
+                            106.8030,
+                            -6.2010
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "damage_002",
+                "class": "Road-Blocked",
+                "confidence": 0.88,
+                "notes": "Debris blocking main road"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            106.8040,
+                            -6.2020
+                        ],
+                        [
+                            106.8043,
+                            -6.2020
+                        ],
+                        [
+                            106.8043,
+                            -6.2022
+                        ],
+                        [
+                            106.8040,
+                            -6.2022
+                        ],
+                        [
+                            106.8040,
+                            -6.2020
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "damage_003",
+                "class": "Water",
+                "confidence": 0.92,
+                "notes": "Flooded area"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            106.8050,
+                            -6.2000
+                        ],
+                        [
+                            106.8054,
+                            -6.2000
+                        ],
+                        [
+                            106.8054,
+                            -6.2004
+                        ],
+                        [
+                            106.8050,
+                            -6.2004
+                        ],
+                        [
+                            106.8050,
+                            -6.2000
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "damage_004",
+                "class": "Building-Medium-Damage",
+                "confidence": 0.81,
+                "notes": "Partial roof collapse"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            106.8020,
+                            -6.2030
+                        ],
+                        [
+                            106.8023,
+                            -6.2030
+                        ],
+                        [
+                            106.8023,
+                            -6.2033
+                        ],
+                        [
+                            106.8020,
+                            -6.2033
+                        ],
+                        [
+                            106.8020,
+                            -6.2030
+                        ]
+                    ]
+                ]
+            }
+        }
+    ]
+}

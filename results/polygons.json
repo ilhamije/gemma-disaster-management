@@ -7,7 +7,8 @@
                 "id": "damage_002",
                 "damage_type": "moderate",
                 "confidence": 0.85,
-                "notes": "Debris on road, passable with caution"
+                "class": "Building-Total-Destruction",
+                "notes": "Collapsed building, route blocked"
             },
             "geometry": {
                 "type": "Polygon",

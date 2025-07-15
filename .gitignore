@@ -26,4 +26,7 @@ Thumbs.db
 
 # IDE files
 .vscode/
-.idea/
+.idea/.gitignore
+
+*venv/
+zREADME.md

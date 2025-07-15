@@ -17,10 +17,46 @@
             overflow: hidden;
         }
     </style>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap JS (for modal functionality) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </head>
 <body>
-    <h2>SAR Damage Visualization</h2>
-    <div id="map"></div>
+    <div class="container-fluid d-flex flex-column" style="height: 100vh; width: 100vw; padding: 0;">
+
+        <div class="d-flex justify-content-between align-items-center p-3" style="z-index: 2; background: rgba(255,255,255,0.9);">
+            <h2 class="m-0">SAR Damage Map</h2>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                Upload Image
+            </button>
+        </div>
+        <div id="map" style="flex: 1 1 0%; width: 100%; z-index: 0;"></div>
+    </div>
+
+    <!-- Modal Popup -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+        <form method="POST" action="/upload" enctype="multipart/form-data">
+            <div class="modal-header">
+            <h5 class="modal-title" id="uploadModalLabel">Upload Image</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            <label for="imageUpload" class="form-label">Choose one or more images to upload</label>
+            <input class="form-control" type="file" id="imageUpload" name="images" multiple>
+            </div>
+            <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Upload</button>
+            </div>
+        </form>
+        </div>
+    </div>
+    </div>
+
     <!-- <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> -->
     <script src="{{ url_for('static', filename='leaflet.js') }}"></script>
     <script>
@@ -31,5 +67,6 @@
         }).addTo(map);
     </script>
     <script src="{{ url_for('static', filename='index.js') }}"></script>
+
 </body>
 </html>

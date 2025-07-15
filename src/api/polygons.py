@@ -5,8 +5,10 @@ bp = Blueprint('polygons', __name__)
 
 @bp.route('/api/polygons')
 def get_polygons():
+    # filename = 'results/polygons.json'
+    filename = 'results/polygons_02.json'
     try:
-        with open('results/polygons.json', 'r') as f:
+        with open(filename, 'r') as f:
             data = json.load(f)
     except FileNotFoundError:
         # Return example static data if file not found
