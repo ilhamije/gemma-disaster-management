@@ -38,3 +38,15 @@ fetch('/api/polygons')
             map.fitBounds(geoLayer.getBounds());
         }
     });
+
+
+// Example using fetch API
+fetch('/ask_gemma', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: "Summarize the damage in this area." })
+})
+    .then(res => res.json())
+    .then(data => {
+        alert(data.response); // Display Gemma's answer
+    });
