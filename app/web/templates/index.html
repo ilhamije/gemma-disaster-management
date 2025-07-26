@@ -29,10 +29,18 @@
 
         <div class="d-flex justify-content-between align-items-center p-3" style="z-index: 2; background: rgba(255,255,255,0.9);">
             <h2 class="m-0">SAR Damage Map</h2>
+            <div id="polygonCount" style="padding: 0.5em 1em; background:#eee; font-weight:bold;"></div>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
                 Upload Image
             </button>
         </div>
+        <div id="statusBar" style="padding:.5em 1em; background:#f3f3f3; font-weight:bold;">
+            <span id="uploadStatus">Ready.</span>
+            <span id="progressSpinner" style="display:none; margin-left:1em;">
+                <span class="spinner-border spinner-border-sm text-primary"></span> Working...
+            </span>
+        </div>
+
         <div id="map" style="flex: 1 1 0%; width: 100%; z-index: 0;"></div>
     </div>
 
@@ -40,7 +48,7 @@
     <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-        <form method="POST" action="/" enctype="multipart/form-data">
+        <form id="uploadForm" method="POST" action="/" enctype="multipart/form-data">
             <div class="modal-header">
             <h5 class="modal-title" id="uploadModalLabel">Upload Image</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -61,7 +69,7 @@
     <script src="{{ url_for('static', filename='leaflet.js') }}"></script>
     <script>
         // Initialize map
-        var map = L.map('map').setView([-6.2, 106.8], 13); // Center on Jakarta or your area
+        var map = L.map('map').setView([-6.2, 106.8], 13); // Center on Jakarta
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);

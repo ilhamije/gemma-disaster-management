@@ -9,10 +9,12 @@ class AnalysisResult(db.Model):
     __tablename__ = "analysis_results"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    batch_id: Mapped[str] = mapped_column(default="")  # Add batch tracking
     image_filename: Mapped[str]
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
-    center_lat: Mapped[float]
-    center_lon: Mapped[float]
+    center_lat: Mapped[float] = mapped_column(nullable=True)
+    center_lon: Mapped[float] = mapped_column(nullable=True)
+    processing_status: Mapped[str] = mapped_column(default="pending")  # pending, processing, completed, failed
 
     polygons: Mapped[List["PolygonFeature"]] = relationship("PolygonFeature", back_populates="result", cascade="all, delete-orphan")
 

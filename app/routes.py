@@ -10,6 +10,10 @@ from .extensions import db
 
 main = Blueprint('main', __name__)
 
+import uuid
+from datetime import datetime
+
+# Add to routes.py
 @main.route('/', methods=["POST", "GET"])
 def index():
     if request.method == "POST":
@@ -18,39 +22,42 @@ def index():
         files = request.files.getlist('images')
         if not files or files[0].filename == '':
             return redirect(url_for('main.index'))
+
+        # Create batch session
+        batch_id = str(uuid.uuid4())
         upload_path = current_app.config['UPLOAD_FOLDER']
+        processed_files = []
+
         for file in files:
             if file and file.filename != '':
                 filename = secure_filename(file.filename)
                 file_path = os.path.join(upload_path, filename)
                 file.save(file_path)
 
-                # Trigger Celery task
-                analyze_image_task.delay(file_path)
+                # Enhanced task with batch tracking
+                analyze_image_task.delay(file_path, batch_id)
+                processed_files.append(filename)
 
-        return redirect(url_for('main.index'))
+        # Store batch info in session or database
+        return jsonify({
+            "status": f"upload {batch_id}",
+            "files_count": len(processed_files),
+            "files": processed_files
+        })
 
     return render_template("index.html")
 
+# Add batch status endpoint
+@main.route('/api/batch/<batch_id>/status', methods=['GET'])
+def batch_status(batch_id):
+    # Query database for batch completion status
+    results = db.session.scalars(
+        select(AnalysisResult).filter_by(batch_id=batch_id)
+    ).all()
 
-# @main.route('/ask_gemma', methods=['POST'])
-# def ask_gemma():
-#     try:
-#         # Fetch latest analysis result
-#         latest_result = db.session.scalar(
-#             select(AnalysisResult).order_by(AnalysisResult.created_at.desc())
-#         )
-#         if not latest_result:
-#             return jsonify({"error": "No analysis results available"}), 404
-
-#         image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], latest_result.image_filename)
-
-#         # Get optional prompt from frontend
-#         prompt = request.json.get("prompt", "Summarize the damage in this area.")
-
-#         gemma_client = OllamaGemmaClient()
-#         result = gemma_client.analyze_disaster_image(image_path, prompt_template="disaster_assessment")
-
-#         return jsonify({"response": result})
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
+    return jsonify({
+        "batch_id": batch_id,
+        "total_expected": request.args.get('total', 0),
+        "completed": len(results),
+        "results": [{"id": r.id, "filename": r.image_filename} for r in results]
+    })

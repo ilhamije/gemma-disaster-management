@@ -10,7 +10,9 @@ const classColorMap = {
     "Road-Blocked": "#808000",
     "Tree": "#00FF00",
     "Pool": "#0080FF",
-    "center": "#3399FF"  // default color for center points
+    "center": "#3399FF",
+    "building_damage": "#FF0000",   // add these
+    "roof_damage": "#FFA500"
 };
 
 // Fetch and render GeoJSON from backend
@@ -63,21 +65,3 @@ fetch('/api/polygons')
         alert("Failed to load polygon data.");
     });
 
-// Trigger Gemma summary (if available)
-// fetch('/ask_gemma', {
-//     method: 'POST',
-//     headers: { 'Content-Type': 'application/json' },
-//     body: JSON.stringify({ prompt: "Summarize the damage in this area." })
-// })
-//     .then(res => res.json())
-//     .then(data => {
-//         if (data.response) {
-//             alert(data.response);
-//         } else {
-//             alert("No response from Gemma.");
-//         }
-//     })
-//     .catch(err => {
-//         console.error("Gemma error:", err);
-//         alert("Failed to get Gemma's summary.");
-//     });

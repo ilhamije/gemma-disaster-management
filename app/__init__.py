@@ -14,7 +14,8 @@ def create_app():
             template_folder='web/templates',
             static_folder='web/static')
 
-    app.config['UPLOAD_FOLDER'] = os.path.join('data', 'input_images')
+    app.config['UPLOAD_FOLDER'] = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), 'data', 'input_images'))
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
     app.config['CELERY'] = {
         "broker_url": "redis://localhost:6379/0",

@@ -1,3 +1,5 @@
+# app/api/polygons.py
+
 from flask import Blueprint, jsonify
 from sqlalchemy import select
 from ..extensions import db
@@ -5,26 +7,22 @@ from ..models import AnalysisResult, PolygonFeature
 import json
 
 bp = Blueprint('polygons', __name__)
-
 @bp.route('/api/polygons', methods=['GET'])
 def get_polygons():
-    # Fetch latest N results, or all
-    results = db.session.scalars(
-        select(AnalysisResult).order_by(AnalysisResult.created_at.desc()).limit(10)
-    ).all()
+    results = db.session.scalars(select(AnalysisResult)).all()
 
-    all_features = []
+    if not results:
+        return jsonify({"type": "FeatureCollection", "features": []})
+
+    features = []
 
     for result in results:
-        # Add center point
-        all_features.append({
+        # center point
+        features.append({
             "type": "Feature",
             "properties": {
-                "id": f"center_{result.id}",
-                "class": "center",
-                "color": "blue",
-                "image": result.image_filename,
-                "created_at": result.created_at.isoformat()
+                "id": f"center_{result}",
+                "class": "center"
             },
             "geometry": {
                 "type": "Point",
@@ -32,26 +30,48 @@ def get_polygons():
             }
         })
 
-        # Add associated polygons
+        # polygons
         for poly in result.polygons:
-            all_features.append({
+            polygon_coords = json.loads(poly.coordinates)
+            features.append({
                 "type": "Feature",
                 "properties": {
                     "id": poly.polygon_id,
                     "damage_type": poly.damage_type,
                     "confidence": poly.confidence,
                     "class": poly.class_label,
-                    "notes": poly.notes,
-                    "image": result.image_filename,
-                    "result_id": result.id
+                    "notes": poly.notes
                 },
                 "geometry": {
                     "type": "Polygon",
-                    "coordinates": json.loads(poly.coordinates)
+                    "coordinates": polygon_coords
                 }
             })
 
-    return jsonify({
-        "type": "FeatureCollection",
-        "features": all_features
-    })
+    return jsonify({"type": "FeatureCollection", "features": features})
+
+
+
+def calculate_polygon_centroid(coordinates):
+    """Calculate centroid of polygon coordinates"""
+    if not coordinates:
+        return [0, 0]
+
+    x_sum = sum(coord[0] for coord in coordinates)
+    y_sum = sum(coord[1] for coord in coordinates)
+    count = len(coordinates)
+
+    return [x_sum / count, y_sum / count]
+
+def calculate_bounds(coordinates):
+    """Calculate bounding box for all coordinates"""
+    if not coordinates:
+        return None
+
+    lons = [coord[0] for coord in coordinates]
+    lats = [coord[1] for coord in coordinates]
+
+    return {
+        "southwest": [min(lons), min(lats)],
+        "northeast": [max(lons), max(lats)]
+    }
