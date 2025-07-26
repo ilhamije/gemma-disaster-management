@@ -1,114 +1,148 @@
-# 1. **System Overview**
+# Gemma Disaster Assessment (Flask + Celery + Ollama)
 
-| Task                              | Supported? | Details                                                                             |
-| :-------------------------------- | :--------- | :---------------------------------------------------------------------------------- |
-| Multimodal analysis with Gemma 3n | Yes        | Gemma 3n can process images, text, and audio on Jetson Nano[^4].                    |
-| Local webapp display              | Yes        | Host a web server (Flask, FastAPI, Node.js, etc.) on Jetson Nano[^7].               |
-| Access from mobile via browser    | Yes        | Connect both devices to the same Wi-Fi, use Jetson’s IP in your phone browser[^8]. |
+A web-based application that allows uploading post-disaster UAV imagery, sends it to a Gemma model (via Ollama) for semantic analysis, and stores the structured polygon results in a database for later mapping and decision support.
 
-## 2. **Deployment Steps and Example Code**
+---
 
-### **A. Set Up Jetson Nano and Gemma 3n**
+## Requirements
 
-1. **Prepare your Jetson Nano**
-   - Flash the latest JetPack OS.
-   - Connect to Wi-Fi or Ethernet.
-   - Update and install Python, pip, and system libraries.
-2. **Install dependencies**
+- Python 3.10+
+- Redis server running on `localhost:6379`
+- Ollama running with `gemma3n` model installed
+- PostgreSQL or SQLite (default: `sqlite:///site.db`)
 
-```bash
-sudo apt update
-sudo apt install python3-pip python3-venv
-python3 -m venv gemma_env
-source gemma_env/bin/activate
-pip install torch torchvision flask
-```
+---
 
-3. **Install Gemma 3n**
-   - Use the official NVIDIA or HuggingFace releases, or optimized builds for Jetson Nano[^3].
-   - Example (using a quantized model and llama.cpp):
+## 🚀 Getting Started
+
+### 1. Clone and set up your virtual environment
 
 ```bash
-git clone https://github.com/kreier/llama.cpp-jetson.nano
-cd llama.cpp-jetson.nano
-# Follow README for CUDA build and model download
+git clone https://github.com/your-username/gemma-disaster-assessment.git
+cd gemma-disaster-assessment
+
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-### **B. Run Multimodal Inference**
+---
 
-- **Image Analysis Example (Python pseudocode):**
+## Database & Migrations
 
-```python
-from PIL import Image
-import torch
-# Load Gemma 3n model (replace with actual loading code)
-model = ... # Load Gemma 3n, e.g., via HuggingFace or llama.cpp wrapper
-
-def analyze_image(image_path):
-    img = Image.open(image_path)
-    # Preprocess as required by Gemma 3n
-    # Run inference
-    result = model.analyze(img)
-    return result  # e.g., {'description': 'Collapsed building', 'objects': ['debris', 'car']}
-```
-
-- **Generate a summary using image and metadata:**
-
-```python
-def multimodal_prompt(image, metadata):
-    prompt = f"Analyze this rescue image and metadata: {metadata}. What should SAR teams know?"
-    result = model.generate(prompt, image=image)
-    return result
-```
-
-### **C. Build and Serve a Local Web App**
-
-- **Minimal Flask Example:**
-
-```python
-from flask import Flask, request, render_template
-app = Flask(__name__)
-
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        image = request.files['image']
-        metadata = request.form['metadata']
-        # Save image, run analysis
-        result = multimodal_prompt(image, metadata)
-        return render_template('result.html', result=result)
-    return render_template('index.html')
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)  # Exposes server to local network
-```
-
-- **Accessing from your phone:**
-  - On Jetson Nano, run:
+### 2. Initialize migrations
 
 ```bash
-hostname -I
+# Set Flask app entry
+export FLASK_APP=manage.py
+
+# Initialize migrations directory
+flask db init
+
+# Create initial migration
+flask db migrate -m "Initial tables for analysis results"
+
+# Apply migration
+flask db upgrade
 ```
 
-This shows your device’s local IP, e.g., `192.168.1.50`.
-    - On your phone (connected to the same Wi-Fi), open your browser and go to:
+---
+
+## Running the App
+
+### 3. Start the Flask server
+
+```bash
+flask run --debug
+```
+
+Or with host exposed for testing on LAN:
+
+```bash
+flask run --debug --host=0.0.0.0
+```
+
+---
+
+## Uploading & Processing
+
+- Navigate to `/` and upload `.jpg`, `.png`, or `.jpeg` images.
+- Images are saved to `data/input_images/`.
+- Each upload triggers a background Celery task to analyze the image via Ollama API.
+- The result polygons are saved to the database and can later be served or mapped.
+
+---
+
+## Running Celery
+
+Make sure Redis is running first.
+
+```bash
+ExecStart=/path/to/venv/bin/celery -A celery_worker.celery worker --loglevel=info
+
+celery -A app.extensions.celery worker --loglevel=info
+```
+
+---
+
+## ⚙️ Ollama Setup
+
+1. Install Ollama: https://ollama.com
+2. Pull the required model:
+
+```bash
+ollama pull gemma3n
+```
+
+3. Ensure Ollama server is running on:
+   `http://localhost:11434`
+
+---
+
+## 📂 Project Structure
 
 ```
-http://192.168.1.50:5000
+app/
+├── __init__.py
+├── extensions.py
+├── models.py
+├── tasks.py
+├── routes.py
+├── core/
+│   └── gemma_client.py
+└── api/
+    └── polygons.py
+src/web/
+├── templates/
+│   └── index.html
+├── static/
+data/
+└── input_images/
 ```
 
-    - You’ll see your web app interface and can upload images, view results, etc.[^7]
+---
 
-## 3. **Notes and Best Practices**
+## ✅ Tips
 
-- **Performance:** Use quantized or optimized Gemma 3n models for Jetson Nano to ensure smooth inference[^3].
-- **Security:** For demo/hackathon, simple local network access is fine. For real-world use, consider authentication.
-- **Offline/Private:** All processing and data stay on the Jetson Nano—no cloud needed[^4].
+- Modify `models.py` if you want to store more metadata or add user authentication.
+- Use `flask shell` for DB inspection and testing.
+- Use [Leaflet.js](https://leafletjs.com) in the frontend to render GeoJSON from your results.
 
-## 4. **References to Real-World Demos**
+---
 
-- NVIDIA and Google have shown live demos of Gemma 3n running on Jetson Nano and Orin Nano, analyzing images and displaying results in real time, fully offline[^4].
-- The workflow is proven for edge AI: image capture, local analysis, and browser-based visualization[^4].
+## Reset DB (dev only)
 
-**In summary:**
-You can absolutely build a system where Jetson Nano runs Gemma 3n for multimodal analysis, hosts a local webapp, and shares results to any device on the same network—including your mobile phone—by accessing the Jetson’s IP address and web server[^7][^4].
+```bash
+flask db downgrade base
+rm -rf migrations
+flask db init
+flask db migrate -m "reset"
+flask db upgrade
+```
+
+---
+
+## Author
+
+Ilham Akbar
+Contact or contribute via [GitHub](https://github.com/ilhamije) or [LinkedIn](https://linkedin.com/in/ilhamije).
