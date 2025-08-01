@@ -4,32 +4,40 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import List
 from .extensions import db
 
-
 class AnalysisResult(db.Model):
     __tablename__ = "analysis_results"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    batch_id: Mapped[str] = mapped_column(default="")  # Add batch tracking
-    image_filename: Mapped[str]
-    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
-    center_lat: Mapped[float] = mapped_column(nullable=True)
-    center_lon: Mapped[float] = mapped_column(nullable=True)
-    processing_status: Mapped[str] = mapped_column(default="pending")  # pending, processing, completed, failed
+    id = db.Column(db.Integer, primary_key=True)
+    batch_id = db.Column(db.String, nullable=False)
+    image_filename = db.Column(db.String, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    center_lat = db.Column(db.Float, nullable=True)
+    center_lon = db.Column(db.Float, nullable=True)
+    processing_status = db.Column(db.String, nullable=False)
 
-    polygons: Mapped[List["PolygonFeature"]] = relationship("PolygonFeature", back_populates="result", cascade="all, delete-orphan")
+    polygons = db.relationship("PolygonFeature", back_populates="result", cascade="all, delete-orphan")
 
 
 class PolygonFeature(db.Model):
     __tablename__ = "polygon_features"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    result_id: Mapped[int] = mapped_column(ForeignKey("analysis_results.id"))
-    polygon_id: Mapped[str]
-    damage_type: Mapped[str]
-    confidence: Mapped[float]
-    class_label: Mapped[str]
-    notes: Mapped[str]
+    id = db.Column(db.Integer, primary_key=True)
+    result_id = db.Column(db.Integer, db.ForeignKey("analysis_results.id"), nullable=False)
+    polygon_id = db.Column(db.String, nullable=False)
+    damage_type = db.Column(db.String)
+    confidence = db.Column(db.Float)
+    class_label = db.Column(db.String)
+    notes = db.Column(db.String)
+    coordinates = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
-    coordinates: Mapped[str]  # stored as JSON stringified coordinates
+    result = db.relationship("AnalysisResult", back_populates="polygons")
 
-    result: Mapped["AnalysisResult"] = relationship("AnalysisResult", back_populates="polygons")
+
+class PolygonJSON(db.Model):
+    __tablename__ = "polygon_json"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False, unique=True)
+    geojson = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

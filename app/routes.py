@@ -39,13 +39,14 @@ def index():
                 processed_files.append(filename)
 
         # Store batch info in session or database
-        return jsonify({
+        results = jsonify({
             "status": f"upload {batch_id}",
             "files_count": len(processed_files),
             "files": processed_files
         })
+        return render_template("index.html", results=results)
 
-    return render_template("index.html")
+    return render_template("index.html", results=None)
 
 # Add batch status endpoint
 @main.route('/api/batch/<batch_id>/status', methods=['GET'])

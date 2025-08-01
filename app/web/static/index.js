@@ -1,67 +1,141 @@
+// === Map Initialization ===
+const map = L.map('map').setView([0, 0], 2);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+}).addTo(map);
+
+// === Status Elements ===
+const uploadStatus = document.getElementById("uploadStatus");
+const progressSpinner = document.getElementById("progressSpinner");
+
+// === Class Colors ===
 const classColorMap = {
-    "Background": "#000000",
-    "Water": "#00BFFF",
-    "Building-No-Damage": "#A0522D",
-    "Building-Medium-Damage": "#FFFF00",
-    "Building-Major-Damage": "#FFA500",
-    "Building-Total-Destruction": "#FF0000",
-    "Vehicle": "#FF00FF",
-    "Road-Clear": "#808080",
-    "Road-Blocked": "#808000",
-    "Tree": "#00FF00",
-    "Pool": "#0080FF",
+    "background": "#000000",
+    "water": "#00BFFF",
+    "building-no-damage": "#A0522D",
+    "building-medium-damage": "#FFFF00",
+    "building-major-damage": "#FFA500",
+    "building-total-destruction": "#FF0000",
+    "vehicle": "#FF00FF",
+    "road-clear": "#808080",
+    "road-blocked": "#808000",
+    "tree": "#00FF00",
+    "pool": "#0080FF",
     "center": "#3399FF",
-    "building_damage": "#FF0000",   // add these
-    "roof_damage": "#FFA500"
 };
 
-// Fetch and render GeoJSON from backend
-fetch('/api/polygons')
-    .then(response => response.json())
-    .then(data => {
-        const geoLayer = L.geoJSON(data, {
-            pointToLayer: function (feature, latlng) {
-                // render center points as circle markers
-                if (feature.geometry.type === "Point") {
-                    return L.circleMarker(latlng, {
-                        radius: 6,
-                        color: feature.properties.color || classColorMap["center"],
-                        fillColor: feature.properties.color || classColorMap["center"],
-                        fillOpacity: 0.9
-                    });
-                }
-                return L.marker(latlng);
-            },
-            style: function (feature) {
-                if (feature.geometry.type === "Polygon") {
-                    const cls = feature.properties.class;
-                    return {
-                        color: classColorMap[cls] || "#FFFFFF",
-                        fillColor: classColorMap[cls] || "#FFFFFF",
-                        fillOpacity: 0.5,
-                        weight: 2
-                    };
-                }
-                return {};  // default style
-            },
-            onEachFeature: function (feature, layer) {
-                const props = feature.properties || {};
-                let popup = `<strong>Class:</strong> ${props.class || 'N/A'}`;
-                if (props.confidence !== undefined) popup += `<br><strong>Confidence:</strong> ${props.confidence}`;
-                if (props.notes) popup += `<br><strong>Notes:</strong> ${props.notes}`;
-                if (props.image) popup += `<br><strong>Image:</strong> ${props.image}`;
-                if (props.created_at) popup += `<br><small><em>${props.created_at}</em></small>`;
+// === Helpers ===
+function normalizeClassName(name) {
+    return name ? name.toString().trim().toLowerCase() : "background";
+}
 
-                layer.bindPopup(popup);
+function fixFeatures(data) {
+    // Ensure data is a valid FeatureCollection
+    if (!data || !Array.isArray(data.features)) {
+        console.warn("Invalid GeoJSON, returning empty collection");
+        return { type: "FeatureCollection", features: [] };
+    }
+
+    data.features = data.features.map(feature => {
+        const geom = feature.geometry;
+        if (!geom || !geom.type || !geom.coordinates) return feature;
+
+        // Ensure polygons have closed rings or downgrade if too few points
+        if (geom.type === "Polygon") {
+            const ring = geom.coordinates[0];
+            if (!Array.isArray(ring) || ring.length < 4) {
+                if (ring.length === 1) {
+                    geom.type = "Point";
+                    geom.coordinates = ring[0];
+                } else if (ring.length === 2) {
+                    geom.type = "LineString";
+                    geom.coordinates = ring;
+                }
+            } else {
+                const first = ring[0], last = ring[ring.length - 1];
+                if (first[0] !== last[0] || first[1] !== last[1]) {
+                    ring.push(first);
+                }
+                geom.coordinates = [ring];
             }
-        }).addTo(map);
+        }
+        return feature;
+    });
 
+    return { type: "FeatureCollection", features: data.features };
+}
+
+// === Render Function ===
+function renderMap(data) {
+    const geoLayer = L.geoJSON(data, {
+        pointToLayer: function (feature, latlng) {
+            const clsKey = normalizeClassName(feature.properties.class);
+            return L.circleMarker(latlng, {
+                radius: 6,
+                color: classColorMap[clsKey] || "#FF00FF",
+                fillColor: classColorMap[clsKey] || "#FF00FF",
+                fillOpacity: 0.9
+            });
+        },
+        style: function (feature) {
+            const clsKey = normalizeClassName(feature.properties.class);
+            return {
+                color: classColorMap[clsKey] || "#FF00FF",
+                fillColor: classColorMap[clsKey] || "#FF00FF",
+                fillOpacity: 0.5,
+                weight: 2
+            };
+        },
+        onEachFeature: function (feature, layer) {
+            const props = feature.properties || {};
+            let popup = `<strong>Class:</strong> ${props.class || 'N/A'}`;
+            if (props.confidence !== undefined) popup += `<br><strong>Confidence:</strong> ${props.confidence}`;
+            if (props.notes) popup += `<br><strong>Notes:</strong> ${props.notes}`;
+            if (props.image) popup += `<br><strong>Image:</strong> ${props.image}`;
+            if (props.created_at) popup += `<br><small><em>${props.created_at}</em></small>`;
+            layer.bindPopup(popup);
+        }
+    }).addTo(map);
+
+    // Zoom to all features
+    if (geoLayer && geoLayer.addTo) {
+        geoLayer.addTo(map);
         if (geoLayer.getLayers().length > 0) {
             map.fitBounds(geoLayer.getBounds());
         }
+    }
+
+    // Show processing status if needed
+    const waitingFeature = data.features.find(f => f.properties && f.properties.waiting);
+    if (waitingFeature) {
+        let countdown = 30; // seconds
+        uploadStatus.textContent = `Processing analysis ... (${countdown}s)`;
+        progressSpinner.style.display = "inline-block";
+
+        const timer = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+                uploadStatus.textContent = `Processing analysis ... (${countdown}s)`;
+            } else {
+                clearInterval(timer);
+                uploadStatus.textContent = "Still processing ... reload soon.";
+                progressSpinner.style.display = "none";
+            }
+        }, 1000);
+    } else {
+        uploadStatus.textContent = "Analysis complete.";
+        progressSpinner.style.display = "none";
+    }
+}
+
+// === Initial Fetch ===
+fetch('/api/polygons')
+    .then(response => response.json())
+    .then(data => {
+        console.log("Polygon data:", data);
+        renderMap(fixFeatures(data));
     })
     .catch(err => {
         console.error("Failed to load polygons:", err);
         alert("Failed to load polygon data.");
     });
-
