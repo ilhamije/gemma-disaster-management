@@ -48,8 +48,8 @@ This project demonstrates an AI-powered disaster assessment pipeline that levera
 
 ### Requirements
 
-- Python 3.10+
-- Redis server running on `localhost:6379`
+- Python 3.10+ (personal recommendation : user pyenv for python3.10 installation and python environment)
+- Redis server running on `localhost:6379` # default
 - Ollama running with `gemma3n` model installed
 - SQLite (default: `sqlite:///site.db`)
 
@@ -76,7 +76,8 @@ flask db upgrade
 ### Ollama Setup
 ```
 # run this in terminal 1
-ollama pull gemma3n
+ollama pull gemma3n:e4b
+# it took a while in my case : 3-4 hours due poor connectivity
 ollama serve
 # Ensure Ollama server is running on http://localhost:11434
 ```
