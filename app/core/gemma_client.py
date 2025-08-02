@@ -93,116 +93,183 @@ class OllamaGemmaClient:
 
     def _validate_feature(self, feature):
         """
-        Ensures each feature has valid geometry following GeoJSON rules.
-        Converts invalid Polygons or LineStrings into simpler types if needed.
+        Validate and normalize a single GeoJSON feature from Gemma model output.
+        Ensures polygons are wrapped and closed, and coordinates are valid.
         """
-        geom = feature.get("geometry", {})
+        if not feature or "geometry" not in feature or "type" not in feature["geometry"]:
+            return None
+
+        geom = feature["geometry"]
+        gtype = geom.get("type")
         coords = geom.get("coordinates", [])
-        gtype = geom.get("type", "")
 
-        # Polygon must have a closed ring with >= 4 points
+        # Normalize Polygon structure
         if gtype == "Polygon":
-            if len(coords) == 1 and isinstance(coords[0], list):
-                ring = coords[0]
-                if len(ring) < 4:
-                    if len(ring) == 1:
-                        geom["type"] = "Point"
-                        geom["coordinates"] = ring[0]
-                    elif len(ring) == 2:
-                        geom["type"] = "LineString"
-                        geom["coordinates"] = ring
-                    else:
-                        geom["type"] = "Point"
-                        geom["coordinates"] = ring[0]
-                else:
-                    # Ensure closed ring
-                    if ring[0] != ring[-1]:
-                        ring.append(ring[0])
-                    geom["coordinates"] = [ring]
-            else:
-                geom["type"] = "Point"
-                geom["coordinates"] = coords[0] if coords else [0, 0]
+            if coords and isinstance(coords[0][0], (int, float)):
+                # Wrap if it's a flat list of points
+                coords = [coords]
+            # Ensure closure
+            if coords and coords[0][0] != coords[0][-1]:
+                coords[0].append(coords[0][0])
+            geom["coordinates"] = coords
 
-        # LineString must have >= 2 coordinate pairs
         elif gtype == "LineString":
+            # Ensure it has at least 2 points
             if not isinstance(coords, list) or len(coords) < 2:
-                geom["type"] = "Point"
-                geom["coordinates"] = coords if isinstance(coords, list) else [0, 0]
+                return None
 
-        # Point must be a pair of numbers
         elif gtype == "Point":
+            # Ensure it's a valid coordinate pair
             if not isinstance(coords, list) or len(coords) != 2:
-                geom["coordinates"] = [0, 0]
+                return None
 
-        feature["geometry"] = geom
-        return feature
+        # Default properties check
+        if "properties" not in feature:
+            feature["properties"] = {}
+
+        return {
+            "type": "Feature",
+            "geometry": geom,
+            "properties": feature["properties"]
+        }
+
 
     def _get_prompt_template(self, template_name: str) -> str:
         """
-        Prompt template updated to explicitly request correct geometry type.
+        Prompt template improved for strict GeoJSON compliance and semantic clarity.
         """
         templates = {
             "disaster_assessment": """
-Analyze this post-disaster UAV/aerial image for emergency response.
+    Analyze this UAV/aerial image of a post-disaster area for emergency response planning.
 
-Identify and classify:
-1. Building damage levels: no damage, minor damage, major damage, total destruction
-2. Road conditions: clear, partially blocked, completely blocked
-3. Debris presence and severity: none, light, moderate, heavy
-4. Water/flooding: none, minor flooding, major flooding
-5. Emergency access: accessible, limited access, no access
-6. Visible hazards: electrical lines down, gas leaks, structural instability
+    Identify and classify visible features, choosing one of these categories:
+    1. Buildings: building_no_damage, building_minor_damage, building_major_damage, building_total_destruction
+    2. Roads: road_clear, road_partially_blocked, road_completely_blocked
+    3. Debris: debris_light, debris_moderate, debris_heavy
+    4. Water/Flooding: water_minor_flooding, water_major_flooding
+    5. Access: access_limited, access_blocked
+    6. Hazards: electrical_hazard, gas_leak, structural_instability
 
-Output structured JSON strictly following GeoJSON-like format.
-- Use "Point" for single coordinate locations.
-- Use "LineString" for linear features with two or more coordinates.
-- Use "Polygon" ONLY if you provide a closed ring with at least four coordinate pairs (first == last).
+    **GeoJSON Output Requirements**:
+    - Use geographic coordinates in EPSG:4326 (longitude, latitude).
+    - Use `"Point"` for single coordinate features (e.g., hazard markers).
+    - Use `"LineString"` for linear features (roads, barriers).
+    - Use `"Polygon"` ONLY for areas and **ensure the outer ring is closed**
+    (first coordinate pair == last coordinate pair, minimum 4 positions).
+    - Avoid empty coordinates and invalid geometries.
+    - Assign `properties.class` matching one of the allowed categories.
+    - Include `properties.confidence` as a float (0–1) and short `properties.notes`.
 
-Example output:
-{
-  "features": [
+    **Color legend (for client rendering):**
+    const classColorMap = {
+    "background": "#000000",
+    "water": "#00BFFF",
+    "building_no_damage": "#A0522D",
+    "building_minor_damage": "#FFFF00",
+    "building_major_damage": "#FFA500",
+    "building_total_destruction": "#FF0000",
+    "vehicle": "#FF00FF",
+    "road_clear": "#808080",
+    "road_partially_blocked": "#808000",
+    "road_completely_blocked": "#804000",
+    "tree": "#00FF00",
+    "pool": "#0080FF",
+    "center": "#3399FF"
+    };
+
+    **Strict output: return only valid JSON**
+    (no extra text, no markdown, no explanations).
+
+    ### Example output:
     {
-      "properties": {
-        "id": "building-1",
-        "damage_type": "major damage",
-        "class": "building_major_damage",
-        "confidence": 0.92,
-        "notes": "Roof partially collapsed"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [-1234.567, 56.789],
-            [-1233.456, 56.79],
-            [-1233.45, 56.795],
-            [-1234.56, 56.79],
-            [-1234.567, 56.789]
-          ]
-        ]
-      }
-    },
-    {
-      "properties": {
-        "id": "road-1",
-        "damage_type": "partially blocked",
-        "class": "road_partially_blocked",
-        "confidence": 0.88,
-        "notes": "Debris on road"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [-1235.0, 56.8],
-          [-1235.5, 56.8]
-        ]
-      }
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "debris-1",
+                "damage_type": "light",
+                "class": "debris_light",
+                "confidence": 0.9,
+                "notes": "Scattered debris on the ground.",
+                "created_at": "2025-08-02T11:47:19.771498"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -85.43032979418332,
+                            29.951160832214736
+                        ],
+                        [
+                            -85.43032981489692,
+                            29.9511608681092
+                        ],
+                        [
+                            -85.43032985632412,
+                            29.9511608681092
+                        ],
+                        [
+                            -85.43032983561052,
+                            29.95116085016197
+                        ],
+                        [
+                            -85.43032979418332,
+                            29.951160832214736
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "water-1",
+                "damage_type": "minor flooding",
+                "class": "water_minor_flooding",
+                "confidence": 0.75,
+                "notes": "Standing water near the building foundation.",
+                "created_at": "2025-08-02T11:47:19.771606"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -85.43032983561052,
+                            29.95116085016197
+                        ],
+                        [
+                            -85.43032985632412,
+                            29.9511608681092
+                        ],
+                        [
+                            -85.43032989775132,
+                            29.95116088605643
+                        ],
+                        [
+                            -85.43032987703772,
+                            29.9511608681092
+                        ],
+                        [
+                            -85.43032983561052,
+                            29.95116085016197
+                        ]
+                    ]
+                ]
+            }
+        }
+    ],
+    "properties": {
+        "center_lat": 29.95190375,
+        "center_lon": -85.42899502777777
     }
-  ]
 }
-"""
+    """
         }
         return templates.get(template_name, templates["disaster_assessment"])
+
 
 
 if __name__ == "__main__":

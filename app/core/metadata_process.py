@@ -1,3 +1,4 @@
+# app/core/metadata_process.py
 from PIL import Image, ExifTags
 import json
 import math
@@ -105,7 +106,3 @@ def process_image(image_path):
     save_path = f"{base_name}_resized_output.jpg"
     image.save(save_path)
     return json.dumps(feature, indent=4)
-
-# Example usage:
-output_json = process_image("data/rescuenet/11006.jpg")
-print(output_json)

@@ -30,42 +30,56 @@ function normalizeClassName(name) {
 }
 
 function fixFeatures(data) {
-    // Ensure data is a valid FeatureCollection
     if (!data || !Array.isArray(data.features)) {
         console.warn("Invalid GeoJSON, returning empty collection");
         return { type: "FeatureCollection", features: [] };
     }
 
-    data.features = data.features.map(feature => {
-        const geom = feature.geometry;
-        if (!geom || !geom.type || !geom.coordinates) return feature;
+    const validFeatures = [];
 
-        // Ensure polygons have closed rings or downgrade if too few points
+    data.features.forEach(feature => {
+        const geom = feature.geometry;
+        if (!geom || !geom.type || !geom.coordinates) return;
+
         if (geom.type === "Polygon") {
             const ring = geom.coordinates[0];
+            if (!Array.isArray(ring)) {
+                console.warn("Invalid polygon, skipping", feature);
+                return null;
+            }
             if (!Array.isArray(ring) || ring.length < 4) {
-                if (ring.length === 1) {
-                    geom.type = "Point";
-                    geom.coordinates = ring[0];
-                } else if (ring.length === 2) {
-                    geom.type = "LineString";
-                    geom.coordinates = ring;
-                }
-            } else {
-                const first = ring[0], last = ring[ring.length - 1];
-                if (first[0] !== last[0] || first[1] !== last[1]) {
-                    ring.push(first);
-                }
-                geom.coordinates = [ring];
+                console.warn("Invalid polygon, skipping", feature);
+                return;
+            }
+            // Ensure closed ring
+            const first = ring[0], last = ring[ring.length - 1];
+            if (first[0] !== last[0] || first[1] !== last[1]) {
+                ring.push(first);
+            }
+            geom.coordinates = [ring];
+        }
+        else if (geom.type === "LineString") {
+            if (!Array.isArray(geom.coordinates) || geom.coordinates.length < 2) {
+                console.warn("Invalid LineString, skipping", feature);
+                return;
             }
         }
-        return feature;
+        else if (geom.type === "Point") {
+            if (!Array.isArray(geom.coordinates) || geom.coordinates.length !== 2) {
+                console.warn("Invalid Point, skipping", feature);
+                return;
+            }
+        }
+        validFeatures.push(feature);
     });
 
-    return { type: "FeatureCollection", features: data.features };
+    return {
+        type: "FeatureCollection",
+        features: validFeatures,
+        properties: data.properties || {}
+    };
 }
 
-// === Render Function ===
 function renderMap(data) {
     const geoLayer = L.geoJSON(data, {
         pointToLayer: function (feature, latlng) {
@@ -91,24 +105,24 @@ function renderMap(data) {
             let popup = `<strong>Class:</strong> ${props.class || 'N/A'}`;
             if (props.confidence !== undefined) popup += `<br><strong>Confidence:</strong> ${props.confidence}`;
             if (props.notes) popup += `<br><strong>Notes:</strong> ${props.notes}`;
-            if (props.image) popup += `<br><strong>Image:</strong> ${props.image}`;
             if (props.created_at) popup += `<br><small><em>${props.created_at}</em></small>`;
             layer.bindPopup(popup);
         }
-    }).addTo(map);
+    });
 
-    // Zoom to all features
-    if (geoLayer && geoLayer.addTo) {
-        geoLayer.addTo(map);
-        if (geoLayer.getLayers().length > 0) {
-            map.fitBounds(geoLayer.getBounds());
-        }
+    geoLayer.addTo(map);  // only once
+
+    // Centering
+    if (data.properties && data.properties.center_lat && data.properties.center_lon) {
+        map.setView([data.properties.center_lat, data.properties.center_lon], 12);
+    } else if (geoLayer.getLayers().length > 0) {
+        map.fitBounds(geoLayer.getBounds());
     }
 
-    // Show processing status if needed
+    // Processing status
     const waitingFeature = data.features.find(f => f.properties && f.properties.waiting);
     if (waitingFeature) {
-        let countdown = 30; // seconds
+        let countdown = 30;
         uploadStatus.textContent = `Processing analysis ... (${countdown}s)`;
         progressSpinner.style.display = "inline-block";
 
@@ -127,6 +141,7 @@ function renderMap(data) {
         progressSpinner.style.display = "none";
     }
 }
+
 
 // === Initial Fetch ===
 fetch('/api/polygons')

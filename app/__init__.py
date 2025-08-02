@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from .core.gemma_client import OllamaGemmaClient
-from .api.polygons import bp as polygons_bp
+# from .api.polygons import bp as polygons_bps
 from .extensions import db, migrate, celery_init_app
 from .models import *
 from .routes import main as main_bp
@@ -26,7 +26,7 @@ def create_app():
     migrate.init_app(app, db)
     celery_init_app(app)
 
-    app.register_blueprint(polygons_bp)
+    # app.register_blueprint(polygons_bp)
     app.register_blueprint(main_bp)
 
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

@@ -1,21 +1,60 @@
-# Gemma Disaster Assessment (Flask + Celery + Ollama)
+# Gemma Disaster Assessment – Jetson Nano + Gemma + Ollama
 
-A web-based application that allows uploading post-disaster UAV imagery, sends it to a Gemma model (via Ollama) for semantic analysis, and stores the structured polygon results in a database for later mapping and decision support.
+## Executive Summary
+
+This project demonstrates an AI-powered disaster assessment pipeline that leverages **Jetson Nano**, **Gemma LLM (via Ollama)**, and **Flask + Celery** for processing UAV imagery. By integrating real-time edge AI inference on the Jetson Nano with cloud-assisted task orchestration, we deliver **near real-time mapping** of disaster-affected regions, producing actionable **GeoJSON outputs** for emergency responders.
 
 ---
 
-## Requirements
+## High-Level Workflow Diagram
+
+![Workflow Diagram](docs-img/local_web_service.png)
+
+---
+
+## Abstract
+
+- **Objective**: Rapidly map building damages, road blockages, debris distribution, and flooding from aerial images for effective emergency response.
+- **Technology Stack**:
+  - **Jetson Nano**: Performs on-device pre-processing (image resizing, metadata extraction).
+  - **Ollama (Gemma3n)**: Handles semantic segmentation and damage classification.
+  - **Flask + Celery + Redis**: Orchestrates distributed processing and handles large batch analysis.
+  - **SQLite**: Stores structured outputs for downstream mapping.
+- **Result**: Produces **GeoJSON polygons** and metadata that can be directly visualized with **Leaflet.js** for field teams.
+
+---
+
+## Dataset Used
+
+### 1. **RescueNet Dataset**
+- **Description**: Post-disaster UAV imagery dataset featuring building damage, blocked roads, debris, and flooding scenarios.
+- **Source**: [RescueNet Dataset](https://github.com/RescueNet/rescuenet-dataset) (open-source)
+- **Content**:
+  - RGB UAV images with disaster scene context
+  - Annotated damage labels for buildings, debris, flooding, and roads
+- **Usage in This Project**:
+  - Used as the primary dataset for testing Gemma’s semantic analysis via Ollama.
+  - Sample images are stored in `data/rescuenet/`.
+
+### 2. **Synthetic Augmentation**
+- Additional synthetic variations:
+  - Artificial debris overlays and waterlogging.
+  - Rotations and scaling to simulate various UAV camera angles.
+- This improves the generalization of Gemma’s reasoning for unseen disaster scenarios.
+
+---
+
+## Technical Section
+
+### Requirements
 
 - Python 3.10+
 - Redis server running on `localhost:6379`
 - Ollama running with `gemma3n` model installed
-- PostgreSQL or SQLite (default: `sqlite:///site.db`)
+- SQLite (default: `sqlite:///site.db`)
 
----
 
-## 🚀 Getting Started
-
-### 1. Clone and set up your virtual environment
+### Getting Started
 
 ```bash
 git clone https://github.com/your-username/gemma-disaster-assessment.git
@@ -26,81 +65,62 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
----
+### Database & Migrations.
 
-## Database & Migrations
-
-### 2. Initialize migrations
-
-```bash
-# Set Flask app entry
-export FLASK_APP=manage.py
-
-# Initialize migrations directory
+```export FLASK_APP=manage.py
 flask db init
-
-# Create initial migration
 flask db migrate -m "Initial tables for analysis results"
-
-# Apply migration
 flask db upgrade
 ```
 
----
-
-## Running the App
-
-### 3. Start the Flask server
-
-```bash
-flask run --debug
+### Ollama Setup
+```
+# run this in terminal 1
+ollama pull gemma3n
+ollama serve
+# Ensure Ollama server is running on http://localhost:11434
 ```
 
-Or with host exposed for testing on LAN:
-
-```bash
-flask run --debug --host=0.0.0.0
+### Running Celery
 ```
-
----
-
-## Uploading & Processing
-
-- Navigate to `/` and upload `.jpg`, `.png`, or `.jpeg` images.
-- Images are saved to `data/input_images/`.
-- Each upload triggers a background Celery task to analyze the image via Ollama API.
-- The result polygons are saved to the database and can later be served or mapped.
-
----
-
-## Running Celery
-
-Make sure Redis is running first.
-
-```bash
-ExecStart=/path/to/venv/bin/celery -A celery_worker.celery worker --loglevel=info
-
+# run this in terminal 2
 celery -A app.extensions.celery worker --loglevel=info
 ```
 
----
 
-## ⚙️ Ollama Setup
-
-1. Install Ollama: https://ollama.com
-2. Pull the required model:
-
-```bash
-ollama pull gemma3n
+### Running the app
 ```
+# run this in terminal 3
+flask run --debug
+# Or for LAN access:
+flask run --debug --host=0.0.0.0
+```
+local network IP might appeared to be access by mobile device
 
-3. Ensure Ollama server is running on:
-   `http://localhost:11434`
+### Uploading & Processing
+
+- Navigate to / and upload .jpg, .png, or .jpeg images.
+- Images saved in data/input_images/.
+- Each upload triggers a Celery task to call Ollama (Gemma3n).
+- Results saved as polygons in DB, accessible as GeoJSON.
+
+---
+### Screenshots & Usage
+
+
+![Welcome Screen](docs-img/system-1-welcome.png)
+#### Different terminals for each : Ollama, Celery (background task), Flask App
+![Processing](docs-img/system-2-processing.png)
+#### Result of predicted damage by Gemma3n
+![Process Finsihed](docs-img/system-3-finished.png)
+#### Result of predicted damage by Gemma3n - ZOOMED
+![Result Zoomed](docs-img/system-4-zoomed.png)
+#### Accessed by mobile device
+![By Mobile Device](docs-img/system-by-mobile-device.png)
 
 ---
 
-## 📂 Project Structure
-
+### Project Structure
 ```
 app/
 ├── __init__.py
@@ -115,25 +135,16 @@ app/
 src/web/
 ├── templates/
 │   └── index.html
-├── static/
-data/
-└── input_images/
+└── static/
 ```
 
----
+### Debugging
+- Modify models.py for additional metadata or authentication.
+- Use flask shell for DB inspection.
+- Use Leaflet.js for rendering GeoJSON results.
 
-## ✅ Tips
-
-- Modify `models.py` if you want to store more metadata or add user authentication.
-- Use `flask shell` for DB inspection and testing.
-- Use [Leaflet.js](https://leafletjs.com) in the frontend to render GeoJSON from your results.
-
----
-
-## Reset DB (dev only)
-
-```bash
-flask db downgrade base
+### Reset DB (Dev Only)
+```flask db downgrade base
 rm -rf migrations
 flask db init
 flask db migrate -m "reset"
@@ -142,7 +153,18 @@ flask db upgrade
 
 ---
 
-## Author
-
+### Author
 Ilham Akbar
-Contact or contribute via [GitHub](https://github.com/ilhamije) or [LinkedIn](https://linkedin.com/in/ilhamije).
+Contact: [GitHub](https://github.com/ilhamije) | [LinkedIn](https://linkedin.com/in/ilhamije)
+
+---
+
+## Current Limitations and Roadmap
+
+- **Lack of Fully Automatic Deployment (Without Docker)**:
+  Currently, setting up this project manually (without Docker) requires multiple steps for Python environment, Redis, and Ollama.
+  **Planned improvement**: Containerize the environment for **one-command deploy** and cross-platform reproducibility.
+
+- **Model Fine-tuning on RescueNet**:
+  The Gemma3n model used here is a general-purpose reasoning model. Although it performs well in disaster scene semantic mapping, it is **not yet fine-tuned** with RescueNet.
+  **Planned improvement**: Fine-tune or adapter-train Gemma3n specifically on RescueNet to improve **damage classification accuracy and spatial prediction quality**.
