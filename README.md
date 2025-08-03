@@ -117,7 +117,7 @@ local network IP might appeared to be access by mobile device
 #### Result of predicted damage by Gemma3n - ZOOMED
 ![Result Zoomed](docs-img/system-4-zoomed.png)
 #### Accessed by mobile device
-![By Mobile Device](docs-img/system-by-mobile-device.png)
+![By Mobile Device](docs-img/system-by-mobile-device.JPG)
 
 ---
 
