@@ -1,4 +1,4 @@
-# Gemma Disaster Assessment – Jetson Nano + Gemma + Ollama
+# Post Disaster Assessment – With Jetson Nano + Gemma + Ollama + Flask
 
 ## Executive Summary
 
