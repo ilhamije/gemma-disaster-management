@@ -1,4 +1,5 @@
-# Post Disaster Assessment – With Jetson Nano + Gemma + Ollama + Flask
+# Post Disaster Assessment
+With Jetson Nano + Gemma + Ollama + Flask
 
 ## Executive Summary
 
@@ -9,6 +10,7 @@ This project demonstrates an AI-powered disaster assessment pipeline that levera
 ## High-Level Workflow Diagram
 
 ![Workflow Diagram](docs-img/local_web_service.png)
+*From my unpublished paper, the area of research intersects with this project.
 
 ---
 
@@ -108,7 +110,6 @@ local network IP might appeared to be access by mobile device
 ---
 ### Screenshots & Usage
 
-
 ![Welcome Screen](docs-img/system-1-welcome.png)
 #### Different terminals for each : Ollama, Celery (background task), Flask App
 ![Processing](docs-img/system-2-processing.png)
@@ -119,7 +120,11 @@ local network IP might appeared to be access by mobile device
 #### Accessed by mobile device
 ![By Mobile Device](docs-img/system-by-mobile-device.JPG)
 
+#### DEMO Video (and a bit of background story)
+[![Disaster Assessment with Jetson and Gemma (via Ollama)](docs-img/gemma-kaggle-thumbnail.png)](https://youtu.be/qAUFMmxTvGI?si=-OnDikYp04kLUT45)
+
 ---
+
 
 ### Project Structure
 ```
