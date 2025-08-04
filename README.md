@@ -3,7 +3,7 @@ With Jetson Nano + Gemma + Ollama + Flask
 
 ## Executive Summary
 
-This project demonstrates an AI-powered disaster assessment pipeline that leverages **Jetson Nano**, **Gemma LLM (via Ollama)**, and **Flask + Celery** for processing UAV imagery. By integrating real-time edge AI inference on the Jetson Nano with cloud-assisted task orchestration, we deliver **near real-time mapping** of disaster-affected regions, producing actionable **GeoJSON outputs** for emergency responders.
+This project demonstrates an AI-powered disaster assessment pipeline that leverages **Jetson Nano**, **Gemma3n model (via Ollama)**, and **Flask + Celery** for processing UAV imagery. By integrating real-time edge AI inference on the Jetson Nano with cloud-assisted task orchestration, we deliver **near real-time mapping** of disaster-affected regions, producing actionable **GeoJSON outputs** for emergency responders.
 
 ---
 
