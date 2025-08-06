@@ -28,7 +28,7 @@ This project demonstrates an AI-powered disaster assessment pipeline that levera
 
 ## Dataset Used
 
-### 1. **RescueNet Dataset**
+### **RescueNet Dataset**
 - **Description**: Post-disaster UAV imagery dataset featuring building damage, blocked roads, debris, and flooding scenarios.
 - **Source**: [RescueNet Dataset](https://github.com/RescueNet/rescuenet-dataset) (open-source)
 - **Content**:
@@ -37,12 +37,6 @@ This project demonstrates an AI-powered disaster assessment pipeline that levera
 - **Usage in This Project**:
   - Used as the primary dataset for testing Gemma’s semantic analysis via Ollama.
   - Sample images are stored in `data/rescuenet/`.
-
-### 2. **Synthetic Augmentation**
-- Additional synthetic variations:
-  - Artificial debris overlays and waterlogging.
-  - Rotations and scaling to simulate various UAV camera angles.
-- This improves the generalization of Gemma’s reasoning for unseen disaster scenarios.
 
 ---
 
@@ -125,7 +119,7 @@ local network IP might appeared to be access by mobile device
 
 #### Deployment Notes
 Currently, the system requires manual setup on Jetson Nano and external components:
-- **Power Supply**: A car inverter for powering the Jetson Nano and router.
+- **Power Supply**: In disaster areas, you can use a car inverter to power the Jetson Nano and router.
 - **Connectivity**: Portable Wi-Fi router for seamless device communication in the field.
 
 ---
@@ -147,6 +141,9 @@ src/web/
 ├── templates/
 │   └── index.html
 └── static/
+│   └── index.js
+│   └── leaflet.css
+│   └── leaflet.js
 ```
 
 ### Debugging
