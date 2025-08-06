@@ -1,14 +1,16 @@
-# Gemma Disaster Assessment – Jetson Nano + Gemma + Ollama
+# Post Disaster Assessment
+With Jetson Nano + Gemma + Ollama + Flask
 
 ## Executive Summary
 
-This project demonstrates an AI-powered disaster assessment pipeline that leverages **Jetson Nano**, **Gemma LLM (via Ollama)**, and **Flask + Celery** for processing UAV imagery. By integrating real-time edge AI inference on the Jetson Nano with cloud-assisted task orchestration, we deliver **near real-time mapping** of disaster-affected regions, producing actionable **GeoJSON outputs** for emergency responders.
+This project demonstrates an AI-powered disaster assessment pipeline that leverages **Jetson Nano**, **Gemma3n model (via Ollama)**, and **Flask + Celery** for processing UAV imagery. By integrating real-time edge AI inference on the Jetson Nano with cloud-assisted task orchestration, we deliver **near real-time mapping** of disaster-affected regions, producing actionable **GeoJSON outputs** for emergency responders.
 
 ---
 
 ## High-Level Workflow Diagram
 
 ![Workflow Diagram](docs-img/local_web_service.png)
+*From my unpublished paper, the area of research intersects with this project.
 
 ---
 
@@ -26,7 +28,7 @@ This project demonstrates an AI-powered disaster assessment pipeline that levera
 
 ## Dataset Used
 
-### 1. **RescueNet Dataset**
+### **RescueNet Dataset**
 - **Description**: Post-disaster UAV imagery dataset featuring building damage, blocked roads, debris, and flooding scenarios.
 - **Source**: [RescueNet Dataset](https://github.com/RescueNet/rescuenet-dataset) (open-source)
 - **Content**:
@@ -35,12 +37,6 @@ This project demonstrates an AI-powered disaster assessment pipeline that levera
 - **Usage in This Project**:
   - Used as the primary dataset for testing Gemma’s semantic analysis via Ollama.
   - Sample images are stored in `data/rescuenet/`.
-
-### 2. **Synthetic Augmentation**
-- Additional synthetic variations:
-  - Artificial debris overlays and waterlogging.
-  - Rotations and scaling to simulate various UAV camera angles.
-- This improves the generalization of Gemma’s reasoning for unseen disaster scenarios.
 
 ---
 
@@ -108,7 +104,6 @@ local network IP might appeared to be access by mobile device
 ---
 ### Screenshots & Usage
 
-
 ![Welcome Screen](docs-img/system-1-welcome.png)
 #### Different terminals for each : Ollama, Celery (background task), Flask App
 ![Processing](docs-img/system-2-processing.png)
@@ -117,9 +112,18 @@ local network IP might appeared to be access by mobile device
 #### Result of predicted damage by Gemma3n - ZOOMED
 ![Result Zoomed](docs-img/system-4-zoomed.png)
 #### Accessed by mobile device
-![By Mobile Device](docs-img/system-by-mobile-device.png)
+![By Mobile Device](docs-img/system-by-mobile-device.JPG)
+
+#### DEMO Video (and a bit of background story)
+[![Disaster Assessment with Jetson and Gemma (via Ollama)](docs-img/gemma-kaggle-thumbnail.png)](https://youtu.be/qAUFMmxTvGI?si=-OnDikYp04kLUT45)
+
+#### Deployment Notes
+Currently, the system requires manual setup on Jetson Nano and external components:
+- **Power Supply**: In disaster areas, you can use a car inverter to power the Jetson Nano and router.
+- **Connectivity**: Portable Wi-Fi router for seamless device communication in the field.
 
 ---
+
 
 ### Project Structure
 ```
@@ -137,6 +141,9 @@ src/web/
 ├── templates/
 │   └── index.html
 └── static/
+    └── index.js
+    └── leaflet.css
+    └── leaflet.js
 ```
 
 ### Debugging
