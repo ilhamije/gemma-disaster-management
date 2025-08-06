@@ -123,6 +123,11 @@ local network IP might appeared to be access by mobile device
 #### DEMO Video (and a bit of background story)
 [![Disaster Assessment with Jetson and Gemma (via Ollama)](docs-img/gemma-kaggle-thumbnail.png)](https://youtu.be/qAUFMmxTvGI?si=-OnDikYp04kLUT45)
 
+#### Deployment Notes
+Currently, the system requires manual setup on Jetson Nano and external components:
+- **Power Supply**: A car inverter for powering the Jetson Nano and router.
+- **Connectivity**: Portable Wi-Fi router for seamless device communication in the field.
+
 ---
 
 
