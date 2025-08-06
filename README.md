@@ -1,4 +1,5 @@
 # Post Disaster Assessment
+
 With Jetson Nano + Gemma + Ollama + Flask
 
 ## Executive Summary
@@ -29,6 +30,7 @@ This project demonstrates an AI-powered disaster assessment pipeline that levera
 ## Dataset Used
 
 ### **RescueNet Dataset**
+
 - **Description**: Post-disaster UAV imagery dataset featuring building damage, blocked roads, debris, and flooding scenarios.
 - **Source**: [RescueNet Dataset](https://github.com/RescueNet/rescuenet-dataset) (open-source)
 - **Content**:
@@ -49,7 +51,6 @@ This project demonstrates an AI-powered disaster assessment pipeline that levera
 - Ollama running with `gemma3n` model installed
 - SQLite (default: `sqlite:///site.db`)
 
-
 ### Getting Started
 
 ```bash
@@ -63,13 +64,14 @@ pip install -r requirements.txt
 
 ### Database & Migrations.
 
-```export FLASK_APP=manage.py
+```export
 flask db init
 flask db migrate -m "Initial tables for analysis results"
 flask db upgrade
 ```
 
 ### Ollama Setup
+
 ```
 # run this in terminal 1
 ollama pull gemma3n:e4b
@@ -79,20 +81,32 @@ ollama serve
 ```
 
 ### Running Celery
+
 ```
 # run this in terminal 2
 celery -A app.extensions.celery worker --loglevel=info
 ```
 
-
 ### Running the app
+
 ```
 # run this in terminal 3
 flask run --debug
 # Or for LAN access:
 flask run --debug --host=0.0.0.0
 ```
-local network IP might appeared to be access by mobile device
+
+After we run the Flask app, in this terminal, local network IP might appeared to be access by mobile device. Below is the example of my current local IP address : http://192.168.0.51:5000
+
+```
+Debug mode: on
+INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.Running on all addresses (0.0.0.0)Running on http://127.0.0.1:5000
+Running on http://192.168.0.51:5000
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 919-163-262
+```
 
 ### Uploading & Processing
 
@@ -102,57 +116,83 @@ local network IP might appeared to be access by mobile device
 - Results saved as polygons in DB, accessible as GeoJSON.
 
 ---
+
 ### Screenshots & Usage
 
 ![Welcome Screen](docs-img/system-1-welcome.png)
+
 #### Different terminals for each : Ollama, Celery (background task), Flask App
+
 ![Processing](docs-img/system-2-processing.png)
+
 #### Result of predicted damage by Gemma3n
+
 ![Process Finsihed](docs-img/system-3-finished.png)
+
 #### Result of predicted damage by Gemma3n - ZOOMED
+
 ![Result Zoomed](docs-img/system-4-zoomed.png)
+
 #### Accessed by mobile device
+
 ![By Mobile Device](docs-img/system-by-mobile-device.JPG)
 
 #### DEMO Video (and a bit of background story)
+
 [![Disaster Assessment with Jetson and Gemma (via Ollama)](docs-img/gemma-kaggle-thumbnail.png)](https://youtu.be/qAUFMmxTvGI?si=-OnDikYp04kLUT45)
 
 #### Deployment Notes
+
 Currently, the system requires manual setup on Jetson Nano and external components:
+
 - **Power Supply**: In disaster areas, you can use a car inverter to power the Jetson Nano and router.
 - **Connectivity**: Portable Wi-Fi router for seamless device communication in the field.
 
 ---
 
-
 ### Project Structure
+
 ```
-app/
-├── __init__.py
-├── extensions.py
-├── models.py
-├── tasks.py
-├── routes.py
-├── core/
-│   └── gemma_client.py
-└── api/
-    └── polygons.py
-src/web/
-├── templates/
-│   └── index.html
-└── static/
-    └── index.js
-    └── leaflet.css
-    └── leaflet.js
+├── app
+│   ├── __init__.py
+│   ├── api
+│   ├── core
+│   ├── data
+│   ├── extensions.py
+│   ├── models.py
+│   ├── routes.py
+│   ├── tasks.py
+│   └── web
+├── celery_worker.py
+├── data
+│   └── rescuenet
+├── docker-compose.yml
+├── docs-img
+│   ├── gemma-kaggle-thumbnail.png
+│   ├── local_web_service.png
+│   ├── system-1-welcome.png
+│   ├── system-2-processing.png
+│   ├── system-3-finished.png
+│   ├── system-4-zoomed.png
+│   ├── system-by-mobile-device.JPG
+│   └── thumbnail.jpg
+├── instance
+│   └── site.db
+├── make_celery.py
+├── manage.py
+├── README.md
+└── requirements.txt
 ```
 
 ### Debugging
+
 - Modify models.py for additional metadata or authentication.
 - Use flask shell for DB inspection.
 - Use Leaflet.js for rendering GeoJSON results.
 
 ### Reset DB (Dev Only)
-```flask db downgrade base
+
+```flask
 rm -rf migrations
 flask db init
 flask db migrate -m "reset"
@@ -162,6 +202,7 @@ flask db upgrade
 ---
 
 ### Author
+
 Ilham Akbar
 Contact: [GitHub](https://github.com/ilhamije) | [LinkedIn](https://linkedin.com/in/ilhamije)
 
@@ -172,7 +213,6 @@ Contact: [GitHub](https://github.com/ilhamije) | [LinkedIn](https://linkedin.com
 - **Lack of Fully Automatic Deployment (Without Docker)**:
   Currently, setting up this project manually (without Docker) requires multiple steps for Python environment, Redis, and Ollama.
   **Planned improvement**: Containerize the environment for **one-command deploy** and cross-platform reproducibility.
-
 - **Model Fine-tuning on RescueNet**:
   The Gemma3n model used here is a general-purpose reasoning model. Although it performs well in disaster scene semantic mapping, it is **not yet fine-tuned** with RescueNet.
   **Planned improvement**: Fine-tune or adapter-train Gemma3n specifically on RescueNet to improve **damage classification accuracy and spatial prediction quality**.
